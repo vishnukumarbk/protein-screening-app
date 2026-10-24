@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
@@ -16,7 +17,9 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,11 +77,63 @@ public class ScreeningControllerTest {
         Assertions.assertThat(screeningRepository.count()).isEqualTo(countBefore);
     }
 
+    @Test
+    public void testCreateExperimentFromFasta() throws IOException {
+        final MvcTestResult result = uploadFasta(new ClassPathResource("fasta/valid.fasta").getContentAsByteArray());
+
+        Assertions.assertThat(result).hasStatus(HttpStatus.CREATED);
+        Assertions.assertThat(result).bodyJson().extractingPath("$.name").isEqualTo(NAME);
+        Assertions.assertThat(result).bodyJson().extractingPath("$.sequences").asArray()
+                .containsExactlyElementsOf(VALID_SEQUENCES);
+    }
+
+    @Test
+    public void testCreateExperimentFromFastaRejectsInvalidSequences() throws IOException {
+        final long countBefore = screeningRepository.count();
+
+        final MvcTestResult result = uploadFasta(new ClassPathResource("fasta/invalid.fasta").getContentAsByteArray());
+
+        Assertions.assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        Assertions.assertThat(screeningRepository.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    public void testCreateExperimentFromFastaRejectsTenSequences() throws IOException {
+        final long countBefore = screeningRepository.count();
+
+        final MvcTestResult result = uploadFasta(new ClassPathResource("fasta/ten-sequences.fasta").getContentAsByteArray());
+
+        Assertions.assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        Assertions.assertThat(result.getMvcResult().getResolvedException())
+                .hasMessageContaining("must contain exactly 20 sequences");
+        Assertions.assertThat(screeningRepository.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    public void testCreateExperimentFromFastaRejectsMalformedFile() {
+        final long countBefore = screeningRepository.count();
+
+        // Sequence data without a '>' header line
+        final MvcTestResult result = uploadFasta("MKTAYIAVRNDQGSKLEA\n".getBytes(StandardCharsets.UTF_8));
+
+        Assertions.assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
+        Assertions.assertThat(screeningRepository.count()).isEqualTo(countBefore);
+    }
+
     private MvcTestResult postExperiment(final List<String> sequences) {
         return mockMvc.post().uri("/protein-screening/api")
                 .servletPath("/protein-screening")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonMapper.writeValueAsString(new Experiment(null, NAME, sequences, null)))
+                .exchange();
+    }
+
+    private MvcTestResult uploadFasta(final byte[] fasta) {
+        return mockMvc.post().uri("/protein-screening/api")
+                .multipart()
+                .servletPath("/protein-screening")
+                .file("file", fasta)
+                .param("name", NAME)
                 .exchange();
     }
 
