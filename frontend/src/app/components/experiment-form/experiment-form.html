@@ -1,0 +1,63 @@
+<form class="experiment-form" [formGroup]="form" (ngSubmit)="submit()">
+  <label class="field">
+    <span class="label">Experiment name</span>
+    <input type="text" formControlName="name" autocomplete="off" />
+  </label>
+
+  <fieldset class="source">
+    <legend class="label">Sequences</legend>
+    <label>
+      <input
+        type="radio"
+        name="source"
+        [checked]="source() === 'manual'"
+        (change)="setSource('manual')"
+      />
+      Enter manually
+    </label>
+    <label>
+      <input
+        type="radio"
+        name="source"
+        [checked]="source() === 'fasta'"
+        (change)="setSource('fasta')"
+      />
+      Upload a FASTA file
+    </label>
+  </fieldset>
+
+  @if (source() === 'manual') {
+    <label class="field">
+      <span class="hint">
+        One sequence per line. {{ enteredCount() }} of {{ sequenceCount }} sequences entered.
+      </span>
+      <textarea
+        formControlName="sequences"
+        rows="20"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="MKTAYIAVRNDQGSKLEA&#10;MKTAYIAFPTLWGSKLEA&#10;…"
+      ></textarea>
+    </label>
+  } @else {
+    <label class="field">
+      <span class="hint">
+        A FASTA file with {{ sequenceCount }} sequences, each under a &gt; header line.
+      </span>
+      <input #fileInput type="file" accept=".fasta,.fa,.faa,.txt" (change)="selectFile($event)" />
+    </label>
+  }
+
+  @if (error(); as message) {
+    <p class="message error" role="alert">{{ message }}</p>
+  }
+  @if (created(); as experiment) {
+    <p class="message success" role="status">
+      Created experiment “{{ experiment.name }}”. <a routerLink="/experiments">View experiments</a>
+    </p>
+  }
+
+  <button type="submit" [disabled]="!canSubmit()">
+    {{ submitting() ? 'Creating…' : 'Create experiment' }}
+  </button>
+</form>

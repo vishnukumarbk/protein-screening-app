@@ -1,0 +1,63 @@
+.experiment-form {
+  display: grid;
+  gap: 1rem;
+  max-width: 56rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.label {
+  font-weight: 600;
+}
+
+input[type='text'],
+textarea {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid light-dark(#c4c4c4, #555);
+  border-radius: 4px;
+  background: light-dark(#fff, #1e1e1e);
+  color: inherit;
+
+  &.ng-touched.ng-invalid {
+    border-color: light-dark(#c62828, #ef9a9a);
+  }
+}
+
+.source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    margin-bottom: 0.25rem;
+    padding: 0;
+  }
+}
+
+textarea {
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 1.5;
+}
+
+button {
+  justify-self: start;
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 4px;
+  background: light-dark(#1f5fbf, #8ab4f8);
+  color: light-dark(#fff, #0b1b33);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

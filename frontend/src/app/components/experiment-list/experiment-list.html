@@ -1,0 +1,28 @@
+<!-- value() throws while the resource is in an error state, so check error() first -->
+@if (experiments.error()) {
+  <p class="message error" role="alert">The experiments could not be loaded.</p>
+} @else if (experiments.value().length === 0) {
+  <p class="hint">{{ experiments.isLoading() ? 'Loading experiments…' : 'No experiments yet.' }}</p>
+} @else {
+  <ul class="experiments">
+    @for (experiment of experiments.value(); track experiment.id) {
+      <li>
+        <details>
+          <summary>
+            <span class="name">{{ experiment.name }}</span>
+            <span class="hint">
+              {{ experiment.sequences.length }} sequences ·
+              {{ experiment.createdAt | date: 'medium' }}
+            </span>
+          </summary>
+          <p class="hint">ID {{ experiment.id }}</p>
+          <ol class="sequences">
+            @for (sequence of experiment.sequences; track $index) {
+              <li>{{ sequence }}</li>
+            }
+          </ol>
+        </details>
+      </li>
+    }
+  </ul>
+}

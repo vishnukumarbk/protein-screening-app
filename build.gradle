@@ -1,7 +1,11 @@
+import com.github.gradle.node.npm.task.NpmTask
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.1.2'
 	id 'io.spring.dependency-management' version '1.1.7'
+
+	id 'com.github.node-gradle.node' version '7.1.0'
 }
 
 group = 'com.nuclera'
@@ -15,6 +19,13 @@ java {
 
 repositories {
 	mavenCentral()
+}
+
+node {
+	download = true
+	version = '24.22.1'
+	npmInstallCommand = 'ci'
+	nodeProjectDir = file('frontend')
 }
 
 dependencies {
@@ -36,4 +47,28 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+def buildFrontend = tasks.register('buildFrontend', NpmTask) {
+	dependsOn tasks.named('npmInstall')
+	npmCommand = ['run', 'build']
+	inputs.files('frontend/src', 'frontend/public', 'frontend/angular.json', 'frontend/package.json',
+			'frontend/package-lock.json', 'frontend/tsconfig.json', 'frontend/tsconfig.app.json')
+	outputs.dir('frontend/dist')
+}
+
+// copy the Angular build files into the jar as static/
+tasks.named('processResources') {
+	from(buildFrontend) {
+		into 'static'
+	}
+}
+
+tasks.named('clean') {
+	delete 'frontend/dist'
+}
+
+// build only the executable jar
+tasks.named('jar') {
+	enabled = false
 }

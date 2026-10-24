@@ -1,0 +1,35 @@
+.experiments {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 56rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+details {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid light-dark(#e0e0e0, #3a3a3a);
+  border-radius: 4px;
+}
+
+summary {
+  cursor: pointer;
+}
+
+.name {
+  margin-right: 0.75rem;
+  font-weight: 600;
+}
+
+details > .hint {
+  margin: 0.5rem 0 0;
+}
+
+// Two columns, numbered top to bottom like the 20-sequence examples
+.sequences {
+  columns: 2 16rem;
+  margin: 0.5rem 0 0;
+  padding-left: 2rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
