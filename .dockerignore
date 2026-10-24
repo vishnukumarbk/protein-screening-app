@@ -1,0 +1,8 @@
+# Local build output and caches: the image builds its own, and node_modules holds macOS-only binaries
+.git
+.gradle
+.idea
+build
+frontend/node_modules
+frontend/dist
+frontend/.angular
