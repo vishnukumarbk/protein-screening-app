@@ -74,7 +74,44 @@ public class ScreeningControllerTest {
         Assertions.assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
         Assertions.assertThat(result.getMvcResult().getResolvedException())
                 .isInstanceOf(MethodArgumentNotValidException.class);
+        Assertions.assertThat(result).bodyJson().extractingPath("$.detail")
+                .isEqualTo("sequences must share a common prefix of at least 5 amino acids");
         Assertions.assertThat(screeningRepository.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    public void testListExperiments() throws UnsupportedEncodingException {
+        final String id = createdId(postExperiment(VALID_SEQUENCES));
+
+        final MvcTestResult result = mockMvc.get().uri("/protein-screening/api")
+                .servletPath("/protein-screening")
+                .exchange();
+
+        Assertions.assertThat(result).hasStatus(HttpStatus.OK);
+        // Newest first
+        Assertions.assertThat(result).bodyJson().extractingPath("$[0].id").isEqualTo(id);
+        Assertions.assertThat(result).bodyJson().extractingPath("$[0].sequences").asArray()
+                .containsExactlyElementsOf(VALID_SEQUENCES);
+    }
+
+    @Test
+    public void testGetExperiment() throws UnsupportedEncodingException {
+        final String id = createdId(postExperiment(VALID_SEQUENCES));
+
+        final MvcTestResult result = getExperiment(id);
+
+        Assertions.assertThat(result).hasStatus(HttpStatus.OK);
+        Assertions.assertThat(result).bodyJson().extractingPath("$.id").isEqualTo(id);
+        Assertions.assertThat(result).bodyJson().extractingPath("$.name").isEqualTo(NAME);
+        Assertions.assertThat(result).bodyJson().extractingPath("$.sequences").asArray()
+                .containsExactlyElementsOf(VALID_SEQUENCES);
+    }
+
+    @Test
+    public void testGetExperimentReturnsNotFoundForUnknownId() {
+        final MvcTestResult result = getExperiment(UUID.randomUUID().toString());
+
+        Assertions.assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -106,6 +143,8 @@ public class ScreeningControllerTest {
         Assertions.assertThat(result).hasStatus(HttpStatus.BAD_REQUEST);
         Assertions.assertThat(result.getMvcResult().getResolvedException())
                 .hasMessageContaining("must contain exactly 20 sequences");
+        Assertions.assertThat(result).bodyJson().extractingPath("$.detail")
+                .isEqualTo("sequences must contain exactly 20 sequences");
         Assertions.assertThat(screeningRepository.count()).isEqualTo(countBefore);
     }
 
@@ -126,6 +165,16 @@ public class ScreeningControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonMapper.writeValueAsString(new Experiment(null, NAME, sequences, null)))
                 .exchange();
+    }
+
+    private MvcTestResult getExperiment(final String id) {
+        return mockMvc.get().uri("/protein-screening/api/" + id)
+                .servletPath("/protein-screening")
+                .exchange();
+    }
+
+    private static String createdId(final MvcTestResult result) throws UnsupportedEncodingException {
+        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
     }
 
     private MvcTestResult uploadFasta(final byte[] fasta) {
