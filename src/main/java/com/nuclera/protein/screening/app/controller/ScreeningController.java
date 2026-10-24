@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -35,6 +36,17 @@ public class ScreeningController {
     @GetMapping("/test/{message}")
     public String ping(@PathVariable(name = "message") final String message) {
         return "Message received " + message + " at " + Instant.now();
+    }
+
+    @GetMapping
+    public List<Experiment> listExperiments() {
+        return screeningService.listExperiments();
+    }
+
+    @GetMapping("/{id}")
+    public Experiment getExperiment(@PathVariable(name = "id") final UUID id) {
+        return screeningService.findExperiment(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "experiment " + id + " not found"));
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
